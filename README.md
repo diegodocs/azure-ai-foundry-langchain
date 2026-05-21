@@ -132,7 +132,6 @@ cp .env.example .env
 | `AZURE_SEARCH_API_KEY` | API key do AI Search (ou deixe vazio para usar Managed Identity) |
 | `WEB_SEARCH_SITE` | Domínio para restringir buscas (ex: `paguemenos.com.br`). Deixe vazio para busca irrestrita. |
 | `WEB_SEARCH_COUNT` | Número máximo de resultados web (padrão: 5) |
-| `WEB_SEARCH_REGION` | Região DuckDuckGo (padrão: `br-pt` para Português-Brasil) |
 
 ## Fase 2 — Executar Localmente
 

@@ -2,14 +2,31 @@ targetScope = 'resourceGroup'
 
 // ── Parameters ────────────────────────────────────────────────────────────────
 
-@description('Localização para todos os recursos. Use "eastus" para maior disponibilidade de modelos.')
-param location string = 'eastus'
+@description('Localização principal dos recursos (AI Foundry, Key Vault, App Insights).')
+param location string = 'eastus2'
 
-@description('Nome base do projeto — prefixo usado em todos os recursos (máx. 12 chars).')
-@maxLength(12)
-param projectName string = 'langfoundry'
+@description('Nome da conta Azure AI Foundry.')
+param aiFoundryAccountName string = 'aif-langchain-lab-001'
 
-@description('Nome do deployment do modelo LLM no AI Services.')
+@description('Nome do projeto dentro da conta AI Foundry.')
+param aiFoundryProjectName string = 'proj-langchain-lab-001'
+
+@description('Nome do Key Vault.')
+param keyVaultName string = 'kv-langchain-lab-001'
+
+@description('Nome do Application Insights.')
+param appInsightsName string = 'app-ins-langchain-lab-001'
+
+@description('Nome da conta Bing Custom Search.')
+param bingAccountName string = 'bing-langchain-lab-001'
+
+@description('Nome do serviço Azure AI Search.')
+param searchServiceName string = 'search-langchain-lab-001'
+
+@description('Localização do Azure AI Search (pode diferir da localização principal).')
+param searchServiceLocation string = 'centralus'
+
+@description('Nome do deployment do modelo LLM na conta AI Foundry.')
 param modelDeploymentName string = 'gpt-4.1'
 
 @description('Versão do modelo LLM a ser deployado.')
@@ -20,32 +37,8 @@ param modelVersion string = '2025-04-14'
 @maxValue(300)
 param modelCapacity int = 10
 
-// ── Variables ─────────────────────────────────────────────────────────────────
-
-var suffix             = take(uniqueString(resourceGroup().id), 6)
-var aiServicesName     = '${projectName}-ai-${suffix}'
-var searchServiceName  = '${projectName}-search-${suffix}'
-var searchIndexName    = 'langchain-foundry'
-var hubName            = '${projectName}-hub-${suffix}'
-var projName           = '${projectName}-proj-${suffix}'
-var storageName        = '${projectName}st${suffix}'
-var keyVaultName       = '${projectName}-kv-${suffix}'
-var logAnalyticsName   = '${projectName}-logs-${suffix}'
-var appInsightsName    = '${projectName}-appins-${suffix}'
-
-// ── Storage Account ───────────────────────────────────────────────────────────
-
-resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
-  name: storageName
-  location: location
-  kind: 'StorageV2'
-  sku: { name: 'Standard_LRS' }
-  properties: {
-    allowBlobPublicAccess: false
-    minimumTlsVersion: 'TLS1_2'
-    supportsHttpsTrafficOnly: true
-  }
-}
+@description('Nome do índice Azure AI Search.')
+param searchIndexName string = 'langchain-foundry'
 
 // ── Key Vault ─────────────────────────────────────────────────────────────────
 
@@ -61,17 +54,6 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   }
 }
 
-// ── Log Analytics Workspace ───────────────────────────────────────────────────
-
-resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
-  name: logAnalyticsName
-  location: location
-  properties: {
-    sku: { name: 'PerGB2018' }
-    retentionInDays: 30
-  }
-}
-
 // ── Application Insights ──────────────────────────────────────────────────────
 
 resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
@@ -80,26 +62,28 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   kind: 'web'
   properties: {
     Application_Type: 'web'
-    WorkspaceResourceId: logAnalytics.id
   }
 }
 
-// ── Azure AI Services (host do GPT-4.1) ──────────────────────────────────────
+// ── Azure AI Foundry Account ──────────────────────────────────────────────────
+// Novo modelo unificado: substitui o par Hub + Project de ML Services.
 
-resource aiServices 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
-  name: aiServicesName
+resource aiFoundryAccount 'Microsoft.CognitiveServices/accounts@2024-10-01' = {
+  name: aiFoundryAccountName
   location: location
-  kind: 'AIServices'
+  kind: 'AIFoundry'
   sku: { name: 'S0' }
   identity: { type: 'SystemAssigned' }
   properties: {
     publicNetworkAccess: 'Enabled'
-    customSubDomainName: aiServicesName
+    customSubDomainName: aiFoundryAccountName
   }
 }
 
+// ── Model Deployment ──────────────────────────────────────────────────────────
+
 resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-10-01' = {
-  parent: aiServices
+  parent: aiFoundryAccount
   name: modelDeploymentName
   sku: {
     name: 'Standard'
@@ -114,11 +98,22 @@ resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-
   }
 }
 
+// ── AI Foundry Project ────────────────────────────────────────────────────────
+// Novo modelo: projeto aninhado na conta AI Foundry (substitui ML workspace Project).
+
+resource aiFoundryProject 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-preview' = {
+  parent: aiFoundryAccount
+  name: aiFoundryProjectName
+  location: location
+  identity: { type: 'SystemAssigned' }
+  properties: {}
+}
+
 // ── Azure AI Search ───────────────────────────────────────────────────────────
 
 resource searchService 'Microsoft.Search/searchServices@2023-11-01' = {
   name: searchServiceName
-  location: location
+  location: searchServiceLocation
   sku: { name: 'basic' }
   properties: {
     replicaCount: 1
@@ -127,78 +122,32 @@ resource searchService 'Microsoft.Search/searchServices@2023-11-01' = {
   }
 }
 
-// ── AI Foundry Hub ────────────────────────────────────────────────────────────
+// ── Bing Custom Search ────────────────────────────────────────────────────────
 
-resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-10-01' = {
-  name: hubName
-  location: location
-  kind: 'Hub'
-  sku: { name: 'Basic', tier: 'Basic' }
-  identity: { type: 'SystemAssigned' }
-  properties: {
-    storageAccount: storageAccount.id
-    keyVault: keyVault.id
-    applicationInsights: appInsights.id
-  }
-}
-
-// Conexão Hub → AI Services (expõe o endpoint GPT-4.1 ao projeto)
-resource hubAiServicesConnection 'Microsoft.MachineLearningServices/workspaces/connections@2024-10-01' = {
-  parent: aiHub
-  name: 'ai-services-connection'
-  properties: {
-    category: 'AIServices'
-    target: aiServices.properties.endpoint
-    authType: 'AAD'
-    isSharedToAll: true
-    metadata: {
-      ApiType: 'Azure'
-      ResourceId: aiServices.id
-    }
-  }
-}
-
-// ── AI Foundry Project ────────────────────────────────────────────────────────
-
-resource aiProject 'Microsoft.MachineLearningServices/workspaces@2024-10-01' = {
-  name: projName
-  location: location
-  kind: 'Project'
-  sku: { name: 'Basic', tier: 'Basic' }
-  identity: { type: 'SystemAssigned' }
-  properties: {
-    hubResourceId: aiHub.id
-  }
+resource bingSearch 'Microsoft.Bing/accounts@2020-06-10' = {
+  name: bingAccountName
+  location: 'global'
+  kind: 'Bing.CustomSearch'
+  sku: { name: 'S1' }
 }
 
 // ── Role Assignments ──────────────────────────────────────────────────────────
 
-// Managed Identity do Projeto pode ler o índice AI Search
+// Managed Identity do Projeto AI Foundry pode ler o índice AI Search
 resource searchIndexReaderRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(searchService.id, aiProject.id, '1407120a-92aa-4202-b7e9-c0e197c71c8f')
+  name: guid(searchService.id, aiFoundryProject.id, '1407120a-92aa-4202-b7e9-c0e197c71c8f')
   scope: searchService
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '1407120a-92aa-4202-b7e9-c0e197c71c8f') // Search Index Data Reader
-    principalId: aiProject.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-// Managed Identity do Hub pode ler/escrever Blobs (ex: artefatos do workspace)
-resource storageBlobContributorRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(storageAccount.id, aiHub.id, 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
-  scope: storageAccount
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // Storage Blob Data Contributor
-    principalId: aiHub.identity.principalId
+    principalId: aiFoundryProject.identity.principalId
     principalType: 'ServicePrincipal'
   }
 }
 
 // ── Outputs — mapeados para variáveis de ambiente pelo azd ───────────────────
 
-// Endpoint do projeto Foundry (usado por AzureAIOpenAIApiChatModel)
-output FOUNDRY_PROJECT_ENDPOINT string = 'https://${aiServicesName}.services.ai.azure.com/api/projects/${projName}'
+// Endpoint do projeto Foundry (usado pela SDK azure-ai-projects)
+output FOUNDRY_PROJECT_ENDPOINT string = 'https://${aiFoundryAccountName}.services.ai.azure.com/api/projects/${aiFoundryProjectName}'
 
 // Nome do deployment do modelo (ex: gpt-4.1)
 output AZURE_AI_MODEL_DEPLOYMENT_NAME string = modelDeploymentName

@@ -14,9 +14,6 @@ langchain-azure-ai[opentelemetry]>=1.2.3
 # Azure AI Search SDK
 azure-search-documents==11.6.0
 
-# Web search (DuckDuckGo — no API key required)
-ddgs>=2.0.0
-
 # FastAPI backend + ASGI server
 fastapi>=0.115.0
 uvicorn[standard]>=0.32.0
