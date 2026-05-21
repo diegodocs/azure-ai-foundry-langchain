@@ -130,7 +130,7 @@ cp .env.example .env
 | `AZURE_SEARCH_ENDPOINT` | Ex: `https://langchain-foundry-search.search.windows.net` |
 | `AZURE_SEARCH_INDEX_NAME` | Nome do índice (ex: `langchain-foundry`) |
 | `AZURE_SEARCH_API_KEY` | API key do AI Search (ou deixe vazio para usar Managed Identity) |
-| `WEB_SEARCH_SITE` | Domínio para restringir buscas (ex: `paguemenos.com.br`). Deixe vazio para busca irrestrita. |
+| `WEB_SEARCH_SITE` | Domínio para restringir buscas (ex: `seusite.com.br`). Deixe vazio para busca irrestrita. |
 | `WEB_SEARCH_COUNT` | Número máximo de resultados web (padrão: 5) |
 | `WEB_SEARCH_REGION` | Região DuckDuckGo (padrão: `br-pt` para Português-Brasil) |
 
