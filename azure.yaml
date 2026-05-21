@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+name: langchain-foundry-agent
+
+metadata:
+  template: langchain-foundry-agent@0.0.1-beta
+
+infra:
+  provider: bicep
+  path: infra
+  module: main
+
+hooks:
+  postprovision:
+    # Cria o índice Azure AI Search após o provisionamento dos recursos.
+    shell: pwsh
+    run: scripts/create-search-index.ps1
+    interactive: false
+    continueOnError: true

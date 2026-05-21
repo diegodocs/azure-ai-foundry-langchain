@@ -1,0 +1,32 @@
+kind: hosted
+name: langchain-foundry-agent
+protocols:
+  - protocol: responses
+    version: 1.0.0
+resources:
+  cpu: "0.5"
+  memory: 1Gi
+environment_variables:
+  - name: AZURE_AI_MODEL_DEPLOYMENT_NAME
+    value: ${AZURE_AI_MODEL_DEPLOYMENT_NAME}
+  - name: AZURE_SEARCH_ENDPOINT
+    value: ${AZURE_SEARCH_ENDPOINT}
+  - name: AZURE_SEARCH_INDEX_NAME
+    value: ${AZURE_SEARCH_INDEX_NAME}
+  - name: AZURE_SEARCH_CONTENT_FIELD
+    value: ${AZURE_SEARCH_CONTENT_FIELD}
+  - name: AZURE_SEARCH_SELECT_FIELDS
+    value: ${AZURE_SEARCH_SELECT_FIELDS}
+  - name: AZURE_SEARCH_TOP
+    value: ${AZURE_SEARCH_TOP}
+  - name: AZURE_SEARCH_VECTOR_FIELD
+    value: ${AZURE_SEARCH_VECTOR_FIELD}
+  - name: BING_CUSTOM_SEARCH_CONFIG_ID
+    value: ${BING_CUSTOM_SEARCH_CONFIG_ID}
+  - name: BING_CUSTOM_SEARCH_COUNT
+    value: ${BING_CUSTOM_SEARCH_COUNT}
+secrets:
+  - name: AZURE_SEARCH_API_KEY
+    value: ${AZURE_SEARCH_API_KEY}
+  - name: BING_CUSTOM_SEARCH_SUBSCRIPTION_KEY
+    value: ${BING_CUSTOM_SEARCH_SUBSCRIPTION_KEY}

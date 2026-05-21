@@ -1,0 +1,10 @@
+$schema: "https://azuremlschemas.azureedge.net/latest/agentManifest.schema.json"
+name: langchain-foundry-agent
+description: >
+  Product catalog agent built with LangGraph hosted on Azure AI Foundry.
+  Uses Azure AI Search (indexed product documents) and Bing Custom Search
+  (company website) to answer questions about products.
+version: "1.0.0"
+models:
+  - name: ${AZURE_AI_MODEL_DEPLOYMENT_NAME}
+    deployment: ${AZURE_AI_MODEL_DEPLOYMENT_NAME}
