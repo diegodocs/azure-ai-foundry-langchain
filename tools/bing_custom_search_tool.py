@@ -2,10 +2,10 @@
 
 Uses the ``duckduckgo-search`` library to perform web searches.  An optional
 site restriction can be applied via the ``WEB_SEARCH_SITE`` environment
-variable (e.g., ``seu-site.com.br``) to restrict results to a single domain.
+variable (e.g., ``paguemenos.com.br``) to restrict results to a single domain.
 
 Environment variables (optional):
-    WEB_SEARCH_SITE     Domain to restrict results to, e.g. ``seu-site.com.br``.
+    WEB_SEARCH_SITE     Domain to restrict results to, e.g. ``paguemenos.com.br``.
                         When set, ``site:<domain>`` is prepended to every query.
     WEB_SEARCH_COUNT    Max results per query (default: 5).
     WEB_SEARCH_REGION   DuckDuckGo region code (default: br-pt for Brazilian Portuguese).
